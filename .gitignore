@@ -1,0 +1,5 @@
+/dist/
+/trae
+/.mygo/
+tests/node_modules/
+.context/

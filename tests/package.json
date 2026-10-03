@@ -1,0 +1,16 @@
+{
+  "name": "trae-tests",
+  "private": true,
+  "description": "Browser and exporter tests for trae. See tests/README.md.",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 otel-js.test.cjs ui.test.cjs"
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.222.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.222.0",
+    "@opentelemetry/resources": "^2.11.0",
+    "@opentelemetry/sdk-trace-base": "^2.11.0",
+    "playwright-core": "^1.63.0"
+  }
+}

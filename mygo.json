@@ -1,0 +1,8 @@
+{
+  "name": "trae",
+  "identifier": "dev.freil.trae",
+  "version": "0.1.0",
+  "copyright": "© 2026 freil",
+  "icon": "resources/icon.png",
+  "out": "dist"
+}

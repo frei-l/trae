@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>trae</title>
+<script src="/boot.js"></script>
+<script src="/theme.js"></script>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="top" id="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1.5" y="2.5" width="9" height="3" rx="1.5" fill="currentColor"/><rect x="5" y="7.5" width="10" height="3" rx="1.5" fill="var(--accent)"/><rect x="8" y="12.5" width="5.5" height="3" rx="1.5" fill="currentColor" opacity=".55"/></svg></span>
+    <span>trae</span>
+  </div>
+  <nav class="seg" id="tabs" aria-label="Views">
+    <span class="thumb" aria-hidden="true"></span>
+    <button data-view="traces" class="on">Traces</button>
+    <button data-view="calls">LLM Calls</button>
+  </nav>
+  <div class="actions">
+    <button class="recv" id="recv" title="OTLP receiver"><i class="dot"></i><span id="recv-text">Starting…</span></button>
+    <button class="icon" id="prefs" title="Settings (⌘,)" aria-label="Settings"></button>
+  </div>
+</header>
+
+<main class="view" id="view-traces">
+  <div class="sess-tools">
+    <input class="sess-filter" id="tr-q" type="search" placeholder="Search traces, prompts, models…" spellcheck="false" autocomplete="off">
+    <button class="sess-pick" id="tr-service" data-facet="services" data-all="All services"><span>All services</span></button>
+    <button class="sess-pick" id="tr-model" data-facet="models" data-all="All models"><span>All models</span></button>
+    <div class="segs" id="tr-status"><span class="thumb"></span><button class="opt on" data-v="all">All</button><button class="opt" data-v="error">Errors</button></div>
+    <span class="grow"></span>
+    <button class="text live on" id="tr-live" title="Pause live updates"><i class="livedot"></i><span>Live</span></button>
+  </div>
+  <div class="led-strip" id="tr-strip"></div>
+  <div class="led-head"><span class="led-sum" id="tr-sum"></span></div>
+  <div id="tr-list"></div>
+  <div class="pager" id="tr-pager" hidden><button class="text action" id="tr-older">Load older</button></div>
+</main>
+
+<main class="view trace-view" id="view-trace" hidden>
+  <div class="tr-head">
+    <button class="text back" id="tv-back" title="Back to traces (Esc)"></button>
+    <div class="tr-title">
+      <h1 id="tv-name"></h1>
+      <div class="tr-badges" id="tv-badges"></div>
+    </div>
+    <span class="grow"></span>
+    <button class="text action mono" id="tv-id" title="Copy trace ID"></button>
+    <button class="icon" id="tv-del" title="Delete trace" aria-label="Delete trace"></button>
+  </div>
+  <div class="led-strip compact" id="tv-strip"></div>
+  <div class="tv-body" id="tv-body">
+    <section class="card tv-tree">
+      <div class="tv-tree-head">
+        <span class="label">Spans</span>
+        <span class="grow"></span>
+        <div class="ticks" id="tv-ticks"></div>
+      </div>
+      <div class="tv-rows" id="tv-rows" tabindex="0"></div>
+    </section>
+    <section class="card tv-detail" id="tv-detail"></section>
+  </div>
+</main>
+
+<main class="view" id="view-calls" hidden>
+  <div class="sess-tools">
+    <input class="sess-filter" id="cl-q" type="search" placeholder="Search model calls…" spellcheck="false" autocomplete="off">
+    <button class="sess-pick" id="cl-service" data-facet="services" data-all="All services"><span>All services</span></button>
+    <button class="sess-pick" id="cl-model" data-facet="models" data-all="All models"><span>All models</span></button>
+    <div class="segs" id="cl-status"><span class="thumb"></span><button class="opt on" data-v="all">All</button><button class="opt" data-v="error">Failed</button></div>
+    <span class="grow"></span>
+  </div>
+  <div class="led-strip" id="cl-strip"></div>
+  <div class="led-head"><span class="led-sum" id="cl-sum"></span></div>
+  <div id="cl-list"></div>
+  <div class="pager" id="cl-pager" hidden><button class="text action" id="cl-older">Load older</button></div>
+</main>
+
+<main class="view narrow" id="view-settings" hidden></main>
+
+<footer class="foot">
+  <span class="status" id="status"></span>
+  <span class="grow"></span>
+  <span class="foot-note" id="foot-note"></span>
+</footer>
+
+<script src="/native.js"></script>
+<script src="/app.js"></script>
+<script src="/conversation.js"></script>
+<script src="/traces.js"></script>
+<script src="/trace.js"></script>
+<script src="/calls.js"></script>
+<script src="/settings.js"></script>
+<script>start();</script>
+</body>
+</html>
