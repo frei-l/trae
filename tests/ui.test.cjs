@@ -134,6 +134,18 @@ test("LLM calls expand in place", async (t) => {
   assert.match(page.url(), /span=[0-9a-f]{16}/);
 });
 
+test("settings changed elsewhere reach the page", async (t) => {
+  const page = await open(t, { path: "/?view=settings" });
+  await page.locator("#view-settings .pref").first().waitFor();
+  // As the app's View menu does: a change that doesn't come from the page.
+  await fetch(trae.url + "/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme: "dark", textSize: 125 }) });
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+  await page.waitForFunction(() => document.documentElement.style.zoom === "1.25");
+  await page.locator("#view-settings .opt.on", { hasText: "125%" }).waitFor();
+  await fetch(trae.url + "/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme: "system", textSize: 100 }) });
+  await page.waitForFunction(() => !document.documentElement.dataset.theme && !document.documentElement.style.zoom);
+});
+
 test("settings: theme, retention, clear", async (t) => {
   const page = await open(t, { path: "/?view=settings" });
   await page.locator("#view-settings .pref").first().waitFor();

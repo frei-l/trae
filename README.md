@@ -17,7 +17,9 @@ Nothing leaves your computer: no account, no cloud and no Docker.
   (`gen_ai.*`, both current and legacy).
 - **Local storage.** SQLite, kept 7 days by default, in the app's data
   directory (`~/Library/Application Support/trae` on macOS, `~/.config/trae`
-  on Linux).
+  on Linux). Development builds (`go run`, `go build`, `mygo dev`) are named
+  **trae Dev** and keep their data and single-instance lock apart from the
+  installed app's.
 - **Plain frontend.** HTML, CSS and JavaScript with no framework and no build
   step. The design follows [Magpie](https://github.com/yetone/magpie).
 
@@ -36,6 +38,12 @@ make app                 # packaged app in dist/ (MyGo CLI: .app, .deb, .tar.gz,
 data directory; `trae serve` also takes `--ui`. If the port is taken (for
 example by another collector), the window still opens and the header says
 so.
+
+On macOS, closing the window keeps trae running in the Dock and receiving
+traces; click the Dock icon to open it again. On Windows and Linux closing
+the window quits. Release builds come from `make app` (`mygo build`), which
+takes the name and version from `mygo.json` and leaves the web inspector
+off.
 
 ## Send traces
 
@@ -105,7 +113,9 @@ attributes and events.
 - **LLM Calls**: every model call across traces, like a request ledger. A row
   opens in place to show what was sent and what came back.
 - **Settings**: endpoint and snippets, sample traces, theme, text size,
-  retention, clear.
+  retention, clear. In the app, the theme also sets the native appearance,
+  and the text size is the page zoom, which View → Zoom In / Zoom Out /
+  Actual Size (`⌘=` `⌘-` `⌘0`) change and keep too.
 
 Keyboard: `/` or `⌘K` search · `⌘1` / `⌘2` views · `⌘,` settings · `↑` `↓` move ·
 `←` `→` fold spans · `Esc` back.

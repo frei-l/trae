@@ -27,8 +27,16 @@ on 127.0.0.1:4318, stores them in SQLite and shows them in a MyGo window.
   `replaceChildren()` rendering, one state object per view, as in Magpie.
   Design tokens live at the top of `app.css`; reuse them.
 - The page talks to Go only through `/api/*` (`api()` in `app.js`) and live
-  updates through the `GET /api/changes?wait=1` long-poll. `window.mygo` is
+  updates through the `GET /api/changes?wait=1` long-poll, which reports
+  both trace changes (`seq`) and settings changes (`prefs`). `window.mygo` is
   optional (`native.js`): the UI must also work in a plain browser.
+- MyGo conventions (see `internal/shell/gui.go`): `shell.Configure` runs
+  first and never overrides a packaged build's name or version; development
+  builds are "trae Dev". Settings that have a native side (theme, text size
+  as page zoom) go through `api.Server.UpdatePrefs`, whose `OnPrefs` hook
+  applies them with `mygo.Theme` and `Page.SetZoomFactor`; don't zoom the page
+  with CSS in the app. The header's height and insets come from
+  `--mygo-titlebar-*`. DevTools stay at MyGo's default (development only).
 
 ## Checks
 

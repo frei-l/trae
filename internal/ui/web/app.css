@@ -91,13 +91,16 @@ code { font-size: 11.5px; }
 svg { flex: none; }
 
 /* ---- header --------------------------------------------------------------- */
+/* The header is the window's title bar: MyGo tells it the title bar's height
+   and the room the window controls take (0 in full screen), in this page's
+   CSS pixels at its current zoom. */
 .top {
-  display: flex; align-items: center; gap: 8px; height: 46px; flex: none; position: relative;
+  display: flex; align-items: center; gap: 8px; flex: none; position: relative;
+  height: var(--mygo-titlebar-height, 46px);
   padding: 0 calc(10px + var(--mygo-titlebar-inset-right, 0px)) 0 calc(14px + var(--mygo-titlebar-inset-left, 0px));
-  --app-region: drag; app-region: drag; -webkit-app-region: drag;
+  --app-region: drag;
 }
-body.app.mac .top { height: 50px; padding-top: 2px; padding-left: max(96px, calc(14px + var(--mygo-titlebar-inset-left, 0px))); }
-.top button, .top input { --app-region: no-drag; app-region: no-drag; -webkit-app-region: no-drag; }
+.top button, .top input { --app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 7px; font-weight: 600; letter-spacing: .01em; }
 .logo { display: inline-flex; color: var(--fg); }
 .seg {

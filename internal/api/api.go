@@ -42,6 +42,9 @@ type Server struct {
 	LongPoll time.Duration
 	// Demo sends sample traces through the receiver, when set.
 	Demo func() error
+	// OnPrefs, when set, applies changed prefs outside the page: the app
+	// window's native theme and zoom.
+	OnPrefs func(Prefs)
 }
 
 // Handler returns the UI handler.
@@ -222,21 +225,30 @@ func (s *Server) facets(w http.ResponseWriter, r *http.Request) {
 	reply(w, f)
 }
 
-// changes answers with the current change counter. With wait=1 it holds
-// the request until the counter passes `after`, for live updates.
+// changes answers with two counters: seq, which moves when traces change,
+// and prefs, which moves when settings change (the app menu changes text
+// size too). With wait=1 it holds the request until either passes the
+// caller's `after` and `prefs`, for live updates.
 func (s *Server) changes(w http.ResponseWriter, r *http.Request) {
-	after, _ := strconv.ParseInt(r.URL.Query().Get("after"), 10, 64)
-	seq := s.Store.Seq()
-	if r.URL.Query().Get("wait") == "1" && seq <= after {
+	q := r.URL.Query()
+	after, _ := strconv.ParseInt(q.Get("after"), 10, 64)
+	prefs := s.Settings.Version()
+	if v, err := strconv.ParseInt(q.Get("prefs"), 10, 64); err == nil {
+		prefs = v
+	}
+	if q.Get("wait") == "1" && s.Store.Seq() <= after && s.Settings.Version() <= prefs {
 		d := s.LongPoll
 		if d <= 0 {
 			d = 25 * time.Second
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), d)
 		defer cancel()
-		seq = s.Store.Wait(ctx, after)
+		woke := make(chan struct{}, 2)
+		go func() { s.Store.Wait(ctx, after); woke <- struct{}{} }()
+		go func() { s.Settings.Wait(ctx, prefs); woke <- struct{}{} }()
+		<-woke
 	}
-	reply(w, map[string]int64{"seq": seq})
+	reply(w, map[string]int64{"seq": s.Store.Seq(), "prefs": s.Settings.Version()})
 }
 
 func (s *Server) clear(w http.ResponseWriter, r *http.Request) {
@@ -269,15 +281,28 @@ func (s *Server) setSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	p, err := s.Settings.Set(p)
+	p, err := s.UpdatePrefs(p)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	reply(w, p)
+}
+
+// UpdatePrefs saves p and applies it: retention now, theme and zoom through
+// OnPrefs.
+func (s *Server) UpdatePrefs(p Prefs) (Prefs, error) {
+	p, err := s.Settings.Set(p)
+	if err != nil {
+		return p, err
+	}
+	if s.OnPrefs != nil {
+		s.OnPrefs(p)
+	}
 	if p.RetentionDays > 0 {
 		go s.Prune()
 	}
-	reply(w, p)
+	return p, nil
 }
 
 // Prune applies the retention setting once.

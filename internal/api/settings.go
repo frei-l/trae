@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -35,17 +36,20 @@ func (p *Prefs) clean() {
 	}
 }
 
-// Settings loads and saves Prefs.
+// Settings loads and saves Prefs. Its version goes up on every change, so
+// pages can wait for one (see Server.changes).
 type Settings struct {
-	path string
-	mu   sync.Mutex
-	p    Prefs
+	path    string
+	mu      sync.Mutex
+	p       Prefs
+	ver     int64
+	changed chan struct{} // closed and replaced on every change
 }
 
 // LoadSettings reads path; a missing file gives the defaults. An empty
 // path keeps settings in memory only.
 func LoadSettings(path string) (*Settings, error) {
-	s := &Settings{path: path, p: defaultPrefs()}
+	s := &Settings{path: path, p: defaultPrefs(), changed: make(chan struct{})}
 	if path == "" {
 		return s, nil
 	}
@@ -75,7 +79,12 @@ func (s *Settings) Set(p Prefs) (Prefs, error) {
 	p.clean()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.p = p
+	if p != s.p {
+		s.p = p
+		s.ver++
+		close(s.changed)
+		s.changed = make(chan struct{})
+	}
 	if s.path == "" {
 		return p, nil
 	}
@@ -88,4 +97,28 @@ func (s *Settings) Set(p Prefs) (Prefs, error) {
 		return p, err
 	}
 	return p, os.Rename(tmp, s.path)
+}
+
+// Version counts the changes since the settings were loaded.
+func (s *Settings) Version() int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.ver
+}
+
+// Wait blocks until Version is past after or ctx ends, and returns Version.
+func (s *Settings) Wait(ctx context.Context, after int64) int64 {
+	for {
+		s.mu.Lock()
+		ver, ch := s.ver, s.changed
+		s.mu.Unlock()
+		if ver > after {
+			return ver
+		}
+		select {
+		case <-ch:
+		case <-ctx.Done():
+			return s.Version()
+		}
+	}
 }

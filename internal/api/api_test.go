@@ -135,6 +135,33 @@ func TestChangesLongPoll(t *testing.T) {
 	}
 }
 
+func TestChangesWakeOnPrefs(t *testing.T) {
+	s, srv := setup(t)
+	var applied []Prefs
+	s.OnPrefs = func(p Prefs) { applied = append(applied, p) }
+	var r map[string]int64
+	get(t, srv.URL+"/api/changes", &r)
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		p := s.Settings.Get()
+		p.TextSize = 125
+		s.UpdatePrefs(p)
+	}()
+	began := time.Now()
+	get(t, srv.URL+"/api/changes?wait=1&after="+itoa(r["seq"])+"&prefs="+itoa(r["prefs"]), &r)
+	if r["prefs"] != 1 || time.Since(began) > time.Second {
+		t.Errorf("prefs %d after %v", r["prefs"], time.Since(began))
+	}
+	if len(applied) != 1 || applied[0].TextSize != 125 {
+		t.Errorf("OnPrefs got %+v", applied)
+	}
+	// Saving the same prefs again is no change.
+	s.UpdatePrefs(s.Settings.Get())
+	if v := s.Settings.Version(); v != 1 {
+		t.Errorf("version %d after an unchanged save", v)
+	}
+}
+
 func itoa(n int64) string { b, _ := json.Marshal(n); return string(b) }
 
 func TestGuard(t *testing.T) {

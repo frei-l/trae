@@ -449,12 +449,14 @@ function refreshView() {
 async function watch() {
   for (;;) {
     try {
-      const r = await api("changes?after=" + Math.max(seq, 0) + "&wait=1");
+      const r = await api("changes?after=" + Math.max(seq, 0) + "&prefs=" + Math.max(prefsVer, 0) + "&wait=1");
       if (seq >= 0 && r.seq !== seq) {
         seq = r.seq;
         if (liveOn) refreshView(); else onPaused();
       }
       seq = r.seq;
+      if (prefsVer >= 0 && r.prefs !== prefsVer) syncPrefs();
+      prefsVer = r.prefs;
     } catch (e) {
       await sleep(2000);
     }
@@ -517,9 +519,24 @@ function applyTheme(theme, animate) {
   else delete root.dataset.theme;
 }
 
+// applyTextSize zooms the page in a browser. In the app the text size is
+// the page's native zoom, which Go sets when the setting changes.
 function applyTextSize(size) {
-  document.documentElement.style.zoom = size && size !== 100 ? size / 100 : "";
+  if (!native.app) document.documentElement.style.zoom = size && size !== 100 ? size / 100 : "";
   requestAnimationFrame(() => $$(".segs, .seg").forEach(slide));
+}
+
+// Settings can change outside the page (the app's View menu changes the
+// text size); the long-poll reports it and the page catches up.
+let prefsVer = -1;
+async function syncPrefs() {
+  let p;
+  try { p = await api("settings"); } catch (e) { return; }
+  const changed = p.theme !== prefs.theme || p.textSize !== prefs.textSize || p.retentionDays !== prefs.retentionDays;
+  if (p.theme !== prefs.theme) applyTheme(p.theme, true);
+  if (p.textSize !== prefs.textSize) applyTextSize(p.textSize);
+  Object.assign(prefs, p);
+  if (changed && view === "settings") views.settings.load();
 }
 
 // ---- keyboard ------------------------------------------------------------------------------------------

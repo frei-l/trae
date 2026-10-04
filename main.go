@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/egoist/mygo"
 	"github.com/frei-l/trae/internal/demo"
 	"github.com/frei-l/trae/internal/shell"
 )
 
+// version is the fallback for builds that mygo.json doesn't version: `go run`
+// and `go build`. Packaged builds report mygo.json's version.
 var version = "0.1.0-dev"
 
 func main() {
@@ -37,6 +40,9 @@ Run "trae <command> -h" for a command's flags.
 }
 
 func run(args []string) error {
+	// Name and version first: they decide the data directory, and a
+	// packaged build reports the version mygo.json gave it.
+	shell.Configure(version)
 	cmd := ""
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		cmd, args = args[0], args[1:]
@@ -44,7 +50,7 @@ func run(args []string) error {
 	switch cmd {
 	case "", "app", "gui":
 		if len(args) > 0 && (args[0] == "-v" || args[0] == "--version") {
-			fmt.Println("trae", version)
+			fmt.Println("trae", mygo.App.Version())
 			return nil
 		}
 		fs := flag.NewFlagSet("trae", flag.ExitOnError)
@@ -52,14 +58,14 @@ func run(args []string) error {
 		otlpAddr := fs.String("otlp", shell.DefaultOTLPAddr, "OTLP/HTTP listen address")
 		data := fs.String("data", "", "data directory (default: the app's user data directory)")
 		fs.Parse(args)
-		return shell.RunGUI(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: version})
+		return shell.RunGUI(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: mygo.App.Version()})
 	case "serve", "web":
 		fs := flag.NewFlagSet("serve", flag.ExitOnError)
 		otlpAddr := fs.String("otlp", shell.DefaultOTLPAddr, "OTLP/HTTP listen address")
 		uiAddr := fs.String("ui", shell.DefaultUIAddr, "UI listen address")
 		data := fs.String("data", defaultDataDir(), "data directory")
 		fs.Parse(args)
-		return shell.Serve(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: version}, *uiAddr)
+		return shell.Serve(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: mygo.App.Version()}, *uiAddr)
 	case "demo":
 		fs := flag.NewFlagSet("demo", flag.ExitOnError)
 		endpoint := fs.String("endpoint", "http://"+shell.DefaultOTLPAddr+"/v1/traces", "OTLP/HTTP traces endpoint")
@@ -68,7 +74,7 @@ func run(args []string) error {
 		fs.Parse(args)
 		return demo.Run(*endpoint, *count, *every)
 	case "version":
-		fmt.Println("trae", version)
+		fmt.Println("trae", mygo.App.Version())
 		return nil
 	case "help":
 		usage()
@@ -78,12 +84,15 @@ func run(args []string) error {
 	return fmt.Errorf("unknown command %q", cmd)
 }
 
-// defaultDataDir matches the app's user data directory, so the window and
+// defaultDataDir is the app's user data directory, so the window and
 // `trae serve` share their traces.
 func defaultDataDir() string {
+	if dir, err := shell.DataDir(); err == nil {
+		return dir
+	}
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "trae-data"
 	}
-	return filepath.Join(dir, "trae")
+	return filepath.Join(dir, mygo.App.Name())
 }
