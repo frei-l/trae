@@ -72,10 +72,6 @@ const sdk = new NodeSDK({
 sdk.start();
 ```
 
-**Already using Langfuse?** Your spans already carry everything trae reads.
-Add the processor above next to `LangfuseSpanProcessor` in the same
-`NodeSDK`, or use it instead. Your instrumentation code doesn't change.
-
 ### Python
 
 ```py
@@ -88,6 +84,25 @@ provider = TracerProvider()
 provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://127.0.0.1:4318/v1/traces")))
 trace.set_tracer_provider(provider)
 ```
+
+### Already using Langfuse
+
+trae reads the spans a Langfuse SDK writes (`@langfuse/otel`, Python
+`langfuse` 3+) and accepts them on Langfuse's ingest path, so point the
+SDK's base URL at trae. There is no auth: any keys work.
+
+```sh
+export LANGFUSE_BASE_URL=http://127.0.0.1:4318   # Python langfuse 3.x: LANGFUSE_HOST
+export LANGFUSE_PUBLIC_KEY=pk-lf-local
+export LANGFUSE_SECRET_KEY=sk-lf-local
+```
+
+An app with its own Langfuse settings (base URL, public and secret key) takes
+the same values; a key check against `/api/public/v2/observations` passes.
+Other Langfuse APIs (prompts, scores) aren't there. To keep sending to Langfuse
+as well, leave those settings alone and add the Node or Python exporter above
+next to `LangfuseSpanProcessor`. Your instrumentation code doesn't change
+either way.
 
 ### Anything else
 

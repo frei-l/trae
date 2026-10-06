@@ -20,10 +20,11 @@ const MaxBody = 64 << 20
 type Sink func(spans []model.Span) error
 
 // Handler serves POST /v1/traces with protobuf or JSON bodies, plain or
-// gzip-compressed, as the OTLP/HTTP spec describes.
+// gzip-compressed, as the OTLP/HTTP spec describes. It also answers the
+// paths a Langfuse SDK uses, so its base URL can point at trae directly.
 func Handler(sink Sink) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/traces", func(w http.ResponseWriter, r *http.Request) {
+	traces := func(w http.ResponseWriter, r *http.Request) {
 		// Browsers exporting with fetch send a preflight first.
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "*")
@@ -71,10 +72,23 @@ func Handler(sink Sink) http.Handler {
 			w.Header().Set("Content-Type", "application/x-protobuf")
 			w.WriteHeader(http.StatusOK)
 		}
+	}
+	mux.HandleFunc("/v1/traces", traces)
+	// Langfuse SDKs export to {baseUrl}/api/public/otel/v1/traces with Basic
+	// auth; trae has no auth, so any keys work.
+	mux.HandleFunc("/api/public/otel/v1/traces", traces)
+	// Langfuse clients check their keys with a small observations query.
+	mux.HandleFunc("/api/public/v2/observations", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"data":[],"meta":{}}`)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			io.WriteString(w, "trae OTLP receiver: POST traces to /v1/traces\n")
+			io.WriteString(w, "trae OTLP receiver: POST traces to /v1/traces (Langfuse SDKs: use this address as the base URL)\n")
 			return
 		}
 		http.NotFound(w, r)

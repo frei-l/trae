@@ -21,19 +21,15 @@ sdk.start();`,
   },
   langfuse: {
     label: "Langfuse SDK",
-    lang: "js",
-    code: (ep) => `// Already tracing with @langfuse/tracing? Keep every span as it is and
-// add trae next to (or instead of) the Langfuse processor.
-import { LangfuseSpanProcessor } from "@langfuse/otel";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+    lang: "sh",
+    code: (ep) => `# Already tracing with a Langfuse SDK? Use trae as its base URL.
+# trae has no auth: any keys work. Your tracing code doesn't change.
+export LANGFUSE_BASE_URL=${ep.replace(/\/v1\/traces$/, "")}   # Python langfuse 3.x: LANGFUSE_HOST
+export LANGFUSE_PUBLIC_KEY=pk-lf-local
+export LANGFUSE_SECRET_KEY=sk-lf-local
 
-const sdk = new NodeSDK({
-  spanProcessors: [
-    new LangfuseSpanProcessor(), // optional
-    new BatchSpanProcessor(new OTLPTraceExporter({ url: "${ep}" })),
-  ],
-});`,
+# To keep sending to Langfuse as well, leave these alone and add an
+# OTLP exporter for ${ep} next to LangfuseSpanProcessor.`,
   },
   python: {
     label: "Python",
