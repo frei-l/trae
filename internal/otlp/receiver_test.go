@@ -3,6 +3,7 @@ package otlp
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -166,5 +167,40 @@ func TestEmptyRequest(t *testing.T) {
 	rec := post(t, h, "application/x-protobuf", "", nil)
 	if rec.Code != 200 || called {
 		t.Errorf("status %d called %v", rec.Code, called)
+	}
+}
+
+func TestLangfusePath(t *testing.T) {
+	h, got := capture()
+	body, err := proto.Marshal(demo.Round(time.Unix(1_700_000_000, 0)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/public/otel/v1/traces", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	req.SetBasicAuth("pk-lf-anything", "sk-lf-anything")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != 200 || len(*got) < 15 {
+		t.Fatalf("status %d, %d spans: %s", rec.Code, len(*got), rec.Body)
+	}
+}
+
+func TestLangfuseCheck(t *testing.T) {
+	h, _ := capture()
+	req := httptest.NewRequest(http.MethodGet, "/api/public/v2/observations?limit=1&fields=core", nil)
+	req.SetBasicAuth("pk-lf-anything", "sk-lf-anything")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var resp struct {
+		Data []any `json:"data"`
+	}
+	if rec.Code != 200 || json.Unmarshal(rec.Body.Bytes(), &resp) != nil || resp.Data == nil {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/api/public/v2/observations", nil))
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("POST: %d", rec.Code)
 	}
 }

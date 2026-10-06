@@ -10,8 +10,8 @@ test: ## go vet + Go tests
 	go vet ./...
 	go test ./...
 
-dev: ## the app, reading internal/ui/web from disk (reload the page after edits)
-	TRAE_DEV_ASSETS=$(CURDIR)/internal/ui/web go run .
+dev: ## "trae Dev" as a real app with its icon (mygo dev), rebuilt and relaunched on changes to Go or internal/ui/web
+	go tool mygo dev
 
 serve: ## receiver + UI at http://127.0.0.1:4380, assets from disk
 	TRAE_DEV_ASSETS=$(CURDIR)/internal/ui/web go run . serve

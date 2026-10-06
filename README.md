@@ -29,6 +29,7 @@ Requires Go 1.27+.
 
 ```sh
 go run .                 # the app window
+make dev                 # the app as "trae Dev" (mygo dev), relaunched on changes
 go run . serve           # no window: open http://127.0.0.1:4380 in a browser
 go run . demo            # send sample traces to a running trae
 make app                 # packaged app in dist/ (MyGo CLI: .app, .deb, .tar.gz, …)
@@ -44,6 +45,12 @@ traces; click the Dock icon to open it again. On Windows and Linux closing
 the window quits. Release builds come from `make app` (`mygo build`), which
 takes the name and version from `mygo.json` and leaves the web inspector
 off.
+
+The app icon is `resources/icon.svg`, drawn on the macOS icon grid;
+`resources/icon.png` is that file exported at 1024×1024, which `mygo build`
+and `mygo dev` turn into the bundle's icon. `go run` and `go build` binaries
+have no bundle, so trae sets the same PNG as its Dock and window icon at
+startup.
 
 ## Send traces
 
@@ -65,10 +72,6 @@ const sdk = new NodeSDK({
 sdk.start();
 ```
 
-**Already using Langfuse?** Your spans already carry everything trae reads.
-Add the processor above next to `LangfuseSpanProcessor` in the same
-`NodeSDK`, or use it instead. Your instrumentation code doesn't change.
-
 ### Python
 
 ```py
@@ -81,6 +84,25 @@ provider = TracerProvider()
 provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://127.0.0.1:4318/v1/traces")))
 trace.set_tracer_provider(provider)
 ```
+
+### Already using Langfuse
+
+trae reads the spans a Langfuse SDK writes (`@langfuse/otel`, Python
+`langfuse` 3+) and accepts them on Langfuse's ingest path, so point the
+SDK's base URL at trae. There is no auth: any keys work.
+
+```sh
+export LANGFUSE_BASE_URL=http://127.0.0.1:4318   # Python langfuse 3.x: LANGFUSE_HOST
+export LANGFUSE_PUBLIC_KEY=pk-lf-local
+export LANGFUSE_SECRET_KEY=sk-lf-local
+```
+
+An app with its own Langfuse settings (base URL, public and secret key) takes
+the same values; a key check against `/api/public/v2/observations` passes.
+Other Langfuse APIs (prompts, scores) aren't there. To keep sending to Langfuse
+as well, leave those settings alone and add the Node or Python exporter above
+next to `LangfuseSpanProcessor`. Your instrumentation code doesn't change
+either way.
 
 ### Anything else
 

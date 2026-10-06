@@ -112,6 +112,13 @@ func (g *gui) ready() {
 		app.Exit(1)
 		return
 	}
+	if !app.IsPackaged() && len(g.opts.Icon) > 0 {
+		// Before the window opens: on Windows and Linux this is the
+		// default icon of new windows.
+		if err := app.Dock.SetIcon(g.opts.Icon); err != nil {
+			log.Printf("trae: icon: %v", err)
+		}
+	}
 	app.SetMenu(g.menu())
 	g.reopen()
 }
