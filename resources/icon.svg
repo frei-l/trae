@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The app icon, drawn on the macOS grid: an 824 body in a 1024 canvas,
+       with its shadow. The bars are those of internal/ui/web/icon.svg.
+       resources/icon.png is this file at 1024×1024 (see README). -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2a31"/>
+      <stop offset="1" stop-color="#17171b"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".3"/>
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#body)" filter="url(#shadow)"/>
+  <rect x="101" y="101" width="822" height="822" rx="184" fill="none" stroke="#fff" stroke-opacity=".1" stroke-width="2"/>
+  <g transform="translate(100 100) scale(12.875)">
+    <rect x="10" y="14" width="30" height="9" rx="4.5" fill="#ededf1"/>
+    <rect x="20" y="28" width="34" height="9" rx="4.5" fill="#a5b4fc"/>
+    <rect x="30" y="42" width="18" height="9" rx="4.5" fill="#ededf1" opacity=".55"/>
+  </g>
+</svg>

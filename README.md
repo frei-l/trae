@@ -29,6 +29,7 @@ Requires Go 1.27+.
 
 ```sh
 go run .                 # the app window
+make dev                 # the app as "trae Dev" (mygo dev), relaunched on changes
 go run . serve           # no window: open http://127.0.0.1:4380 in a browser
 go run . demo            # send sample traces to a running trae
 make app                 # packaged app in dist/ (MyGo CLI: .app, .deb, .tar.gz, …)
@@ -44,6 +45,12 @@ traces; click the Dock icon to open it again. On Windows and Linux closing
 the window quits. Release builds come from `make app` (`mygo build`), which
 takes the name and version from `mygo.json` and leaves the web inspector
 off.
+
+The app icon is `resources/icon.svg`, drawn on the macOS icon grid;
+`resources/icon.png` is that file exported at 1024×1024, which `mygo build`
+and `mygo dev` turn into the bundle's icon. `go run` and `go build` binaries
+have no bundle, so trae sets the same PNG as its Dock and window icon at
+startup.
 
 ## Send traces
 

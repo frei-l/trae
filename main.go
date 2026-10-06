@@ -4,6 +4,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -18,6 +19,12 @@ import (
 // version is the fallback for builds that mygo.json doesn't version: `go run`
 // and `go build`. Packaged builds report mygo.json's version.
 var version = "0.1.0-dev"
+
+// icon is the app icon, which packaged builds take from mygo.json. Other
+// builds set it at run time (see shell.Options.Icon).
+//
+//go:embed resources/icon.png
+var icon []byte
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -58,7 +65,7 @@ func run(args []string) error {
 		otlpAddr := fs.String("otlp", shell.DefaultOTLPAddr, "OTLP/HTTP listen address")
 		data := fs.String("data", "", "data directory (default: the app's user data directory)")
 		fs.Parse(args)
-		return shell.RunGUI(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: mygo.App.Version()})
+		return shell.RunGUI(shell.Options{DataDir: *data, OTLPAddr: *otlpAddr, Version: mygo.App.Version(), Icon: icon})
 	case "serve", "web":
 		fs := flag.NewFlagSet("serve", flag.ExitOnError)
 		otlpAddr := fs.String("otlp", shell.DefaultOTLPAddr, "OTLP/HTTP listen address")

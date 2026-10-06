@@ -31,6 +31,10 @@ type Options struct {
 	OTLPAddr string
 	Version  string
 	Web      bool
+	// Icon is the app icon as PNG, for the window of a build that isn't
+	// packaged: `go run` and `go build` binaries have no bundle to take it
+	// from, and macOS would show a plain "exec" icon in the Dock.
+	Icon []byte
 }
 
 // Core is one running trae: database, settings, API and OTLP receiver.
